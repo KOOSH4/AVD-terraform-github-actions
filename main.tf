@@ -190,6 +190,17 @@ resource "azurerm_key_vault" "avd_kv" {
   sku_name            = "standard"                                   # SKU for the Key Vault
 }
 
+# This resource block assigns a role to a principal for accessing Azure Key Vault secrets.
+# Role assignments are used to grant access to Azure resources by assigning roles to users, groups, or applications.
+
+# Assign "Key Vault Secrets Officer" role to the Service Principal
+resource "azurerm_role_assignment" "keyvault_secrets" {
+  scope                = azurerm_key_vault.avd_kv.id  # Scope of the role assignment (Key Vault ID)
+  role_definition_name = "Key Vault Secrets Officer"  # Role to be assigned
+  principal_id         = data.azurerm_client_config.current.object_id  # ID of the Service Principal
+
+  depends_on = [azurerm_key_vault.avd_kv]  # Ensure Key Vault is created first
+}
 
 # This resource block creates an access policy for Azure Key Vault.
 # An access policy defines the permissions for a user, group, or application to access secrets, keys, and certificates in the Key Vault.
