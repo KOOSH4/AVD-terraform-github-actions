@@ -19,6 +19,7 @@ env:
   ARM_CLIENT_ID: "${{ secrets.AZURE_CLIENT_ID }}"
   ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
+  ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
 
 jobs:
   terraform-plan:
@@ -140,6 +141,9 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: tfplan
+    # Move Terraform State to Rename Resource Before Apply
+    - name: Rename Terraform Resource in State
+      run: terraform state mv azurerm_resource_group.rg-aks azurerm_resource_group.rg-avd || echo "Resource not found, skipping"
 
     # Terraform Apply
     - name: Terraform Apply
