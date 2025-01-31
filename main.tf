@@ -39,7 +39,7 @@ resource "azurerm_virtual_desktop_application_group" "avd_app_group" {
   name                = "avd-app-group"
   location            = azurerm_resource_group.rg-avd.location
   resource_group_name = azurerm_resource_group.rg-avd.name
-  type                = "Desktop"  # Options: "Desktop" or "RemoteApp"
+  type                = "Desktop" # Options: "Desktop" or "RemoteApp"
   host_pool_id        = azurerm_virtual_desktop_host_pool.avd_host_pool.id
 }
 
@@ -47,5 +47,5 @@ resource "azurerm_virtual_desktop_application_group" "avd_app_group" {
 # It links the specified workspace to the application group defined earlier.
 resource "azurerm_virtual_desktop_workspace_application_group_association" "avd_association" {
   workspace_id         = azurerm_virtual_desktop_workspace.avd_workspace.id
-  application_group_id = azurerm_virtual_desktop_application_group.avd_app_group.id  # Link to App Group
+  application_group_id = azurerm_virtual_desktop_application_group.avd_app_group.id # Link to App Group
 }
