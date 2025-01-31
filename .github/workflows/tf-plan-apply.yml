@@ -22,8 +22,11 @@ env:
   ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
   TF_VAR_admin_username: ${{ secrets.AVD_ADMIN_USERNAME }}
   TF_VAR_admin_password: ${{ secrets.AVD_ADMIN_PASSWORD }}
+ 
+
 
 jobs:
+  
   terraform-plan:
     name: 'Terraform Plan'
     runs-on: ubuntu-latest
@@ -32,7 +35,7 @@ jobs:
       ARM_SKIP_PROVIDER_REGISTRATION: true
     outputs:
       tfplanExitCode: ${{ steps.tf-plan.outputs.exitcode }}
-
+      
     steps:
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
@@ -47,6 +50,10 @@ jobs:
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       run: terraform init
+
+    - name: Terraform unlock
+      run: terraform force-unlock 32111cdc-21cd-4e80-f6f4-9ed4adb43d10
+
 
     # Checks that all Terraform configuration files adhere to a canonical format
     # Will fail the build if not
