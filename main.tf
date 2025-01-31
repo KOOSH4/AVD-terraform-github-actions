@@ -223,8 +223,8 @@ data "azurerm_key_vault_secret" "admin_username" {
 
 
 resource "azurerm_virtual_desktop_host_pool_registration_info" "avd_registration" {
-  hostpool_id    = azurerm_virtual_desktop_host_pool.avd_host_pool.id
-  expiration_date = formatdate("YYYY-MM-DDTHH:MM:SSZ", timeadd(timestamp(), "24h"))  # Token valid for 24 hours
+  hostpool_id     = azurerm_virtual_desktop_host_pool.avd_host_pool.id
+  expiration_date = formatdate("YYYY-MM-DDTHH:MM:SSZ", timeadd(timestamp(), "24h")) # Token valid for 24 hours
 }
 
 
