@@ -18,8 +18,8 @@ terraform {
 
 provider "azurerm" {
   features {}
-  use_oidc = true
 }
+
 
 # This resource block defines an Azure Resource Group named "rg-AVD-int-dewc-1"
 # in the location specified by the variable 'var.location'. The resource group
