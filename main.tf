@@ -32,20 +32,15 @@ resource "azurerm_resource_group" "rg-avd" {
     Owner    = "Olad, Koosha"
   }
 }
-# This resource block defines an Azure Virtual Desktop Application Group.
-# The application group is named "avd-app-group" and is located in the same region as the specified resource group.
-# It is associated with a host pool and is of type "Desktop".
-resource "azurerm_virtual_desktop_application_group" "avd_app_group" {
-  name                = "avd-app-group"
+# AVD Host Pool
+resource "azurerm_virtual_desktop_host_pool" "avd_host_pool" {
+  name                = "hp-avd-int-dewc-1" # Example name hp-AVD-int-dewc-1
   location            = azurerm_resource_group.rg-avd.location
   resource_group_name = azurerm_resource_group.rg-avd.name
-  type                = "Desktop" # Options: "Desktop" or "RemoteApp"
-  host_pool_id        = azurerm_virtual_desktop_host_pool.avd_host_pool.id
-}
 
-# This resource block creates an association between an Azure Virtual Desktop Workspace and an Application Group.
-# It links the specified workspace to the application group defined earlier.
-resource "azurerm_virtual_desktop_workspace_application_group_association" "avd_association" {
-  workspace_id         = azurerm_virtual_desktop_workspace.avd_workspace.id
-  application_group_id = azurerm_virtual_desktop_application_group.avd_app_group.id # Link to App Group
+  type               = var.host_pool_type     # "Pooled" or "Personal" (from variables.tf)
+  load_balancer_type = var.load_balancer_type # "DepthFirst" (fills one host at a time)
+  // validation_environment = true  # Set to "true" for production
+  friendly_name = "AVD Host Pool - Production"
+  description   = "Host pool for remote desktops"
 }
