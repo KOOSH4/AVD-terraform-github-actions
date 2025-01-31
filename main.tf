@@ -221,6 +221,12 @@ data "azurerm_key_vault_secret" "admin_username" {
   key_vault_id = azurerm_key_vault.avd_kv.id                  # ID of the Key Vault
 }
 
+
+resource "azurerm_virtual_desktop_host_pool_registration_info" "avd_registration" {
+  hostpool_id    = azurerm_virtual_desktop_host_pool.avd_host_pool.id
+  expiration_date = timeadd(timestamp(), "24h") # Token valid for 24 hours
+}
+
 # This resource block creates Azure Virtual Desktop (AVD) Session Host Virtual Machines (VMs).
 # Session Host VMs are the virtual machines that users connect to in order to access their virtual desktops and applications.
 
