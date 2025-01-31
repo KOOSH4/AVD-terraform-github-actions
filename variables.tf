@@ -27,19 +27,26 @@ variable "vm_size" {
   default     = "Standard_D2s_v3" # suitable for office workloads
 }
 
-variable "admin_username" {
-  description = "Admin username for AVD session host VMs"
-  type        = string
+variable "vm_count" {
+  description = "Number of session host VMs"
+  default     = 2
 }
 
-variable "admin_password" {
-  description = "Admin password for AVD session host VMs"
-  type        = string
-  sensitive   = true
-}
 
 variable "allowed_rdp_ips" {
   description = "List of public IPs allowed to access RDP (3389)."
   type        = list(string)
   default     = [] # Can be set here or in terraform.tfvars
+}
+
+
+variable "admin_password" {
+  description = "Initial admin password for AVD session hosts"
+  type        = string
+  sensitive   = true
+}
+variable "admin_username" {
+  description = "Initial admin username for AVD session hosts"
+  type        = string
+  sensitive   = true
 }

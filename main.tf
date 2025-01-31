@@ -176,3 +176,91 @@ resource "azurerm_subnet_network_security_group_association" "avd_subnet_nsg" {
   subnet_id                 = azurerm_subnet.avd_subnet.id
   network_security_group_id = azurerm_network_security_group.avd_nsg.id
 }
+
+
+# This resource block creates an Azure Key Vault.
+# Azure Key Vault is a service that provides secure storage and management of sensitive information such as secrets, keys, and certificates.
+
+resource "azurerm_key_vault" "avd_kv" {
+  name                = "avd-keyvault"                               # Name of the Key Vault
+  location            = var.location2                                # Location specified by the 'location2' variable
+  resource_group_name = azurerm_resource_group.rg-avd.name           # Associated resource group
+  tenant_id           = data.azurerm_client_config.current.tenant_id # Tenant ID for the Key Vault
+  sku_name            = "standard"                                   # SKU for the Key Vault
+}
+
+# This resource block stores a secret in Azure Key Vault.
+# Azure Key Vault Secret is used to securely store and manage sensitive information such as passwords, tokens, and API keys.
+
+# Store Admin Password and username in Key Vault
+resource "azurerm_key_vault_secret" "admin_password" {
+  name         = "avd-admin-password"        # Name of the secret
+  value        = var.admin_password          # Initial value from GitHub Secrets
+  key_vault_id = azurerm_key_vault.avd_kv.id # ID of the Key Vault
+}
+resource "azurerm_key_vault_secret" "admin_username" {
+  name         = "avd-admin-username"        # Name of the secret
+  value        = var.admin_username          # Initial value from GitHub Secrets
+  key_vault_id = azurerm_key_vault.avd_kv.id # ID of the Key Vault
+}
+
+# This data block retrieves a secret from Azure Key Vault.
+# Azure Key Vault Secret is used to securely store and manage sensitive information such as passwords, tokens, and API keys.
+
+# Retrieve Admin Password from Key Vault
+data "azurerm_key_vault_secret" "admin_password" {
+  name         = azurerm_key_vault_secret.admin_password.name # Name of the secret
+  key_vault_id = azurerm_key_vault.avd_kv.id                  # ID of the Key Vault
+}
+# This data block retrieves a secret from Azure Key Vault.
+# Azure Key Vault Secret is used to securely store and manage sensitive information such as passwords, tokens, and API keys.
+
+# Retrieve Admin Username from Key Vault
+data "azurerm_key_vault_secret" "admin_username" {
+  name         = azurerm_key_vault_secret.admin_username.name # Name of the secret
+  key_vault_id = azurerm_key_vault.avd_kv.id                  # ID of the Key Vault
+}
+
+# This resource block creates Azure Virtual Desktop (AVD) Session Host Virtual Machines (VMs).
+# Session Host VMs are the virtual machines that users connect to in order to access their virtual desktops and applications.
+
+# Create Session Host VMs
+resource "azurerm_windows_virtual_machine" "avd_vm" {
+  count               = var.vm_count                                       # Number of VMs to create
+  name                = "avd-vm-${count.index + 1}"                        # Name of the VM
+  resource_group_name = azurerm_resource_group.rg-avd.name                 # Associated resource group
+  location            = var.location2                                      # Location of the VMs
+  size                = var.vm_size                                        # Size of the VMs
+  admin_username      = data.azurerm_key_vault_secret.admin_username.value # Securely retrieving admin username
+  admin_password      = data.azurerm_key_vault_secret.admin_password.value # Securely retrieving admin password
+
+  network_interface_ids = [azurerm_network_interface.avd_nic[count.index].id] # Network interface IDs
+
+  os_disk {
+    caching              = "ReadWrite"       # Disk caching
+    storage_account_type = "StandardSSD_LRS" # Storage account type
+  }
+
+  source_image_reference {
+    publisher = "MicrosoftWindowsDesktop" # Image publisher
+    offer     = "windows-11"              # Image offer
+    sku       = "win11-23h2-avd"          # Image SKU
+    version   = "latest"                  # Image version
+  }
+
+  # This block ensures that the VMs automatically join the AVD Host Pool.
+  # It uses custom data to run a PowerShell script that installs the AVD Agent and registers the VM with the Host Pool.
+  custom_data = base64encode(<<EOF
+  <powershell>
+  # Install AVD Agent
+  Invoke-WebRequest -Uri "https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrmXv" -OutFile "C:\avdagent.msi"
+  Start-Process "msiexec.exe" -ArgumentList "/i C:\avdagent.msi /quiet /norestart" -Wait
+  
+  # Register VM with Host Pool
+  $token = "${azurerm_virtual_desktop_host_pool_registration_info.avd_registration.token}"
+  $cmd = "C:\Program Files\Microsoft RDInfra\Agent\RDAgentBootLoader.exe /token:$token"
+  Start-Process -FilePath "powershell" -ArgumentList "-Command $cmd" -NoNewWindow -Wait
+  </powershell>
+  EOF
+  )
+}
