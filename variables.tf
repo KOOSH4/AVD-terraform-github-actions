@@ -14,5 +14,5 @@ variable "host_pool_type" {
 variable "load_balancer_type" {
   description = "Load balancing algorithm for the host pool"
   type        = string
-  default     = "DepthFirst"  # Options: 'DepthFirst', 'BreadthFirst'
+  default     = "DepthFirst" # Options: 'DepthFirst', 'BreadthFirst'
 }
