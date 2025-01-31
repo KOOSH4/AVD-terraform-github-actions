@@ -86,26 +86,24 @@ resource "azurerm_virtual_desktop_workspace_application_group_association" "avd_
 # This resource block creates an Azure Virtual Network (VNet).
 # A VNet is a logical isolation of the Azure cloud dedicated to your subscription.
 # It enables Azure resources to securely communicate with each other, the internet, and on-premises networks.
-#
-# The VNet is named "vnet-avd-int-westeu" and is located in the region specified by the 'location2' variable.
-# - address_space: The address space for the VNet, defined as "10.0.0.0/16"
+
 resource "azurerm_virtual_network" "avd_vnet" {
-  name                = "vnet-avd-int-westeu"
-  location            = var.location2
-  resource_group_name = azurerm_resource_group.rg-avd.name
-  address_space       = ["10.0.0.0/16"]
+  name                = "vnet-avd-int-westeu"  # Name of the VNet
+  location            = var.location2          # Location specified by the 'location2' variable
+  resource_group_name = azurerm_resource_group.rg-avd.name  # Associated resource group
+  address_space       = ["10.0.0.0/16"]        # Address space for the VNet
 }
 
 # This resource block creates a Subnet within an Azure Virtual Network (VNet).
 # A subnet is a range of IP addresses in the VNet. Subnets allow you to segment the VNet into smaller, manageable sections.
 # They enable Azure resources to communicate with each other and with the internet.
+
 resource "azurerm_subnet" "avd_subnet" {
   name                 = "snet-avd"
   resource_group_name  = azurerm_resource_group.rg-avd.name
   virtual_network_name = azurerm_virtual_network.avd_vnet.name
   address_prefixes     = ["10.0.1.0/24"]
 }
-
 
 # This resource block creates Network Interfaces (NICs) for Virtual Machines (VMs).
 # NICs are used to connect VMs to a virtual network, enabling communication with other resources.
@@ -122,4 +120,59 @@ resource "azurerm_network_interface" "avd_nic" {
     subnet_id                     = azurerm_subnet.avd_subnet.id # Now it exists!
     private_ip_address_allocation = "Dynamic"
   }
+}
+
+# This resource block creates a Network Security Group (NSG) for Azure Virtual Desktop (AVD).
+# An NSG is used to control inbound and outbound traffic to network interfaces (NICs), VMs, and subnets.
+
+resource "azurerm_network_security_group" "avd_nsg" {
+  name                = "nsg-avd"
+  location            = var.location
+  resource_group_name = azurerm_resource_group.rg-avd.name
+
+  # Allow RDP Access (Modify source_address_prefix for security)
+  security_rule {
+    name                       = "Allow-RDP"
+    priority                   = 100
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "3389"
+    source_address_prefixes    = var.allowed_rdp_ips  # Using the variable here
+    destination_address_prefix = "*"
+  }
+
+  # Allow AVD Management Traffic (Required for AVD functionality)
+  security_rule {
+    name                       = "Allow-AVD-Management"
+    priority                   = 110
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_ranges    = ["443", "9350", "9354"]  # Required for AVD service
+    source_address_prefix      = "AzureFrontDoor.Backend" # Microsoft-recommended AVD service tag
+    destination_address_prefix = "*"
+  }
+
+  # Deny all other inbound traffic (Implicitly denied, but explicitly adding it for clarity)
+  security_rule {
+    name                       = "Deny-All-Inbound"
+    priority                   = 4000
+    direction                  = "Inbound"
+    access                     = "Deny"
+    protocol                   = "*"
+    source_port_range          = "*"
+    destination_port_range     = "*"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
+  }
+}
+# This resource block associates a Network Security Group (NSG) with a Subnet.
+# Associating an NSG with a subnet applies the security rules to all resources within the subnet.
+
+resource "azurerm_subnet_network_security_group_association" "avd_subnet_nsg" {
+  subnet_id                 = azurerm_subnet.avd_subnet.id
+  network_security_group_id = azurerm_network_security_group.avd_nsg.id
 }
