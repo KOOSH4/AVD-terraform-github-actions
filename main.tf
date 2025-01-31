@@ -56,7 +56,7 @@ resource "azurerm_virtual_desktop_host_pool" "avd_host_pool" {
 # It is associated with the specified resource group and host pool, and is of type "Desktop".
 resource "azurerm_virtual_desktop_application_group" "avd_app_group" {
   name                = "ag-avd-int-dewc-1"
-  location            = var.location
+  location            = "westeurope"
   resource_group_name = azurerm_resource_group.rg-avd.name
   type                = "Desktop" # Options: "Desktop" or "RemoteApp"
   host_pool_id        = azurerm_virtual_desktop_host_pool.avd_host_pool.id
