@@ -182,7 +182,7 @@ resource "azurerm_subnet_network_security_group_association" "avd_subnet_nsg" {
 # Azure Key Vault is a service that provides secure storage and management of sensitive information such as secrets, keys, and certificates.
 data "azurerm_client_config" "current" {}
 resource "azurerm_key_vault" "avd_kv" {
-  name                = "avd-keyvault"                               # Name of the Key Vault
+  name                = "kyvlt-avd-1"                               # Name of the Key Vault
   location            = var.location2                                # Location specified by the 'location2' variable
   resource_group_name = azurerm_resource_group.rg-avd.name           # Associated resource group
   tenant_id           = data.azurerm_client_config.current.tenant_id # Tenant ID for the Key Vault
