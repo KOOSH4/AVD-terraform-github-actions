@@ -2,4 +2,4 @@
 resource_group_name = "rg-AVD-pool-dewc"
 location            = "germanywestcentral"
 location2           = "westeurope"
-allowed_rdp_ips = ["85.22.68.226/24"]
+allowed_rdp_ips     = ["85.22.68.226/24"]

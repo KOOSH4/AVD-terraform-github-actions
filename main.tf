@@ -88,10 +88,10 @@ resource "azurerm_virtual_desktop_workspace_application_group_association" "avd_
 # It enables Azure resources to securely communicate with each other, the internet, and on-premises networks.
 
 resource "azurerm_virtual_network" "avd_vnet" {
-  name                = "vnet-avd-int-westeu"  # Name of the VNet
-  location            = var.location2          # Location specified by the 'location2' variable
-  resource_group_name = azurerm_resource_group.rg-avd.name  # Associated resource group
-  address_space       = ["10.0.0.0/16"]        # Address space for the VNet
+  name                = "vnet-avd-int-westeu"              # Name of the VNet
+  location            = var.location2                      # Location specified by the 'location2' variable
+  resource_group_name = azurerm_resource_group.rg-avd.name # Associated resource group
+  address_space       = ["10.0.0.0/16"]                    # Address space for the VNet
 }
 
 # This resource block creates a Subnet within an Azure Virtual Network (VNet).
@@ -139,7 +139,7 @@ resource "azurerm_network_security_group" "avd_nsg" {
     protocol                   = "Tcp"
     source_port_range          = "*"
     destination_port_range     = "3389"
-    source_address_prefixes    = var.allowed_rdp_ips  # Using the variable here
+    source_address_prefixes    = var.allowed_rdp_ips # Using the variable here
     destination_address_prefix = "*"
   }
 

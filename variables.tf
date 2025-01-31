@@ -41,5 +41,5 @@ variable "admin_password" {
 variable "allowed_rdp_ips" {
   description = "List of public IPs allowed to access RDP (3389)."
   type        = list(string)
-  default     = []  # Can be set here or in terraform.tfvars
+  default     = [] # Can be set here or in terraform.tfvars
 }
