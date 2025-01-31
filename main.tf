@@ -253,7 +253,7 @@ data "azurerm_key_vault_secret" "admin_password" {
 # Retrieve Admin Username from Key Vault
 data "azurerm_key_vault_secret" "admin_username" {
   name         = azurerm_key_vault_secret.admin_username.name # Name of the secret
-  key_vault_id = azurerm_key_vault.avd_kv.id                  # ID of the Key Vault
+  key_vault_id = azurerm_key_vault.avd_kv.id                  # ID of the Key Vault.
 }
 
 
