@@ -6,7 +6,7 @@ terraform {
     }
   }
 
-  # Update this block with the location of your terraform state file
+  # Update this block with the location of your terraform state file.
   backend "azurerm" {
     resource_group_name  = "rg-AVD-int-dewc-2"
     storage_account_name = "stavdtfdewc2"
