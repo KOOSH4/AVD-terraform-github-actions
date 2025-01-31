@@ -56,7 +56,7 @@ jobs:
 
 
 
-    # Checks that all Terraform configuration files adhere to a canonical format
+    # Checks that all Terraform configuration files adhere to a canonical format.
     # Will fail the build if not
     - name: Terraform Format
       run: terraform fmt -check
