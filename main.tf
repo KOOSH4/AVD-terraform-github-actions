@@ -223,39 +223,37 @@ data "azurerm_key_vault_secret" "admin_username" {
 
 
 resource "azurerm_virtual_desktop_host_pool_registration_info" "avd_registration" {
-  hostpool_id    = azurerm_virtual_desktop_host_pool.avd_host_pool.id
+  host_pool_id   = azurerm_virtual_desktop_host_pool.avd_host_pool.id
   expiration_date = timeadd(timestamp(), "24h") # Token valid for 24 hours
 }
 
-# This resource block creates Azure Virtual Desktop (AVD) Session Host Virtual Machines (VMs).
-# Session Host VMs are the virtual machines that users connect to in order to access their virtual desktops and applications.
 
-# Create Session Host VMs
 resource "azurerm_windows_virtual_machine" "avd_vm" {
-  count               = var.vm_count                                       # Number of VMs to create
-  name                = "avd-vm-${count.index + 1}"                        # Name of the VM
-  resource_group_name = azurerm_resource_group.rg-avd.name                 # Associated resource group
-  location            = var.location2                                      # Location of the VMs
-  size                = var.vm_size                                        # Size of the VMs
-  admin_username      = data.azurerm_key_vault_secret.admin_username.value # Securely retrieving admin username
-  admin_password      = data.azurerm_key_vault_secret.admin_password.value # Securely retrieving admin password
+  count               = var.vm_count
+  name                = "avd-vm-${count.index + 1}"
+  resource_group_name = azurerm_resource_group.rg-avd.name
+  location            = var.location2
+  size                = var.vm_size
+  admin_username      = data.azurerm_key_vault_secret.admin_username.value
+  admin_password      = data.azurerm_key_vault_secret.admin_password.value
 
-  network_interface_ids = [azurerm_network_interface.avd_nic[count.index].id] # Network interface IDs
+  network_interface_ids = [azurerm_network_interface.avd_nic[count.index].id]
 
   os_disk {
-    caching              = "ReadWrite"       # Disk caching
-    storage_account_type = "StandardSSD_LRS" # Storage account type
+    caching              = "ReadWrite"
+    storage_account_type = "StandardSSD_LRS"
   }
 
   source_image_reference {
-    publisher = "MicrosoftWindowsDesktop" # Image publisher
-    offer     = "windows-11"              # Image offer
-    sku       = "win11-23h2-avd"          # Image SKU
-    version   = "latest"                  # Image version
+    publisher = "MicrosoftWindowsDesktop"
+    offer     = "windows-11"
+    sku       = "win11-23h2-avd"
+    version   = "latest"
   }
 
-  # This block ensures that the VMs automatically join the AVD Host Pool.
-  # It uses custom data to run a PowerShell script that installs the AVD Agent and registers the VM with the Host Pool.
+  # Ensure the host pool registration is created before VMs
+  depends_on = [azurerm_virtual_desktop_host_pool_registration_info.avd_registration]
+
   custom_data = base64encode(<<EOF
 <powershell>
 # Install AVD Agent
