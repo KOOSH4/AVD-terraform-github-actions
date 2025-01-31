@@ -251,16 +251,16 @@ resource "azurerm_windows_virtual_machine" "avd_vm" {
   # This block ensures that the VMs automatically join the AVD Host Pool.
   # It uses custom data to run a PowerShell script that installs the AVD Agent and registers the VM with the Host Pool.
   custom_data = base64encode(<<EOF
-  <powershell>
-  # Install AVD Agent
-  Invoke-WebRequest -Uri "https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrmXv" -OutFile "C:\avdagent.msi"
-  Start-Process "msiexec.exe" -ArgumentList "/i C:\avdagent.msi /quiet /norestart" -Wait
-  
-  # Register VM with Host Pool
-  $token = "${azurerm_virtual_desktop_host_pool_registration_info.avd_registration.token}"
-  $cmd = "C:\Program Files\Microsoft RDInfra\Agent\RDAgentBootLoader.exe /token:$token"
-  Start-Process -FilePath "powershell" -ArgumentList "-Command $cmd" -NoNewWindow -Wait
-  </powershell>
-  EOF
+<powershell>
+# Install AVD Agent
+Invoke-WebRequest -Uri "https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrmXv" -OutFile "C:\avdagent.msi"
+Start-Process "msiexec.exe" -ArgumentList "/i C:\avdagent.msi /quiet /norestart" -Wait
+
+# Register VM with Host Pool
+$token = "${azurerm_virtual_desktop_host_pool_registration_info.avd_registration.token}"
+$cmd = "C:\Program Files\Microsoft RDInfra\Agent\RDAgentBootLoader.exe /token:$token"
+Start-Process -FilePath "powershell" -ArgumentList "-Command $cmd" -NoNewWindow -Wait
+</powershell>
+EOF
   )
 }
