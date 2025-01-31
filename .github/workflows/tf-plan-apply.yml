@@ -141,9 +141,6 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: tfplan
-    # Move Terraform State to Rename Resource Before Apply
-    - name: Rename Terraform Resource in State
-      run: terraform state mv azurerm_resource_group.rg-aks azurerm_resource_group.rg-avd || echo "Resource not found, skipping"
 
     # Terraform Apply
     - name: Terraform Apply
