@@ -37,10 +37,3 @@ variable "admin_password" {
   type        = string
   sensitive   = true
 }
-
-
-variable "subnet_id" {
-  description = "Subnet ID for session host VMs"
-  type        = string
-}
-
