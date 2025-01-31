@@ -20,6 +20,8 @@ env:
   ARM_SUBSCRIPTION_ID: "${{ secrets.AZURE_SUBSCRIPTION_ID }}"
   ARM_TENANT_ID: "${{ secrets.AZURE_TENANT_ID }}"
   ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
+  TF_VAR_admin_username: ${{ secrets.AVD_ADMIN_USERNAME }}
+  TF_VAR_admin_password: ${{ secrets.AVD_ADMIN_PASSWORD }}
 
 jobs:
   terraform-plan:
