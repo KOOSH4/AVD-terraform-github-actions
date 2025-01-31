@@ -33,7 +33,7 @@ resource "azurerm_resource_group" "rg-avd" {
 # AVD Host Pool
 resource "azurerm_virtual_desktop_host_pool" "avd_host_pool" {
   name                = "hp-avd-int-dewc-1" # Example name hp-AVD-int-dewc-1
-  location            = azurerm_resource_group.rg-avd.location
+  location            = "westeurope"
   resource_group_name = azurerm_resource_group.rg-avd.name
 
   type               = var.host_pool_type     # "Pooled" or "Personal" (from variables.tf)
