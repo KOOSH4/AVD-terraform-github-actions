@@ -52,7 +52,8 @@ jobs:
       run: terraform init
 
     - name: Terraform unlock
-      run: terraform force-unlock 32111cdc-21cd-4e80-f6f4-9ed4adb43d10
+      run: terraform force-unlock -force 32111cdc-21cd-4e80-f6f4-9ed4adb43d10
+
 
 
     # Checks that all Terraform configuration files adhere to a canonical format
