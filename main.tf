@@ -195,11 +195,11 @@ resource "azurerm_key_vault" "avd_kv" {
 
 # Assign "Key Vault Secrets Officer" role to the Service Principal
 resource "azurerm_role_assignment" "keyvault_secrets" {
-  scope                = azurerm_key_vault.avd_kv.id  # Scope of the role assignment (Key Vault ID)
-  role_definition_name = "Key Vault Secrets Officer"  # Role to be assigned
-  principal_id         = data.azurerm_client_config.current.object_id  # ID of the Service Principal
+  scope                = azurerm_key_vault.avd_kv.id                  # Scope of the role assignment (Key Vault ID)
+  role_definition_name = "Key Vault Secrets Officer"                  # Role to be assigned
+  principal_id         = data.azurerm_client_config.current.object_id # ID of the Service Principal
 
-  depends_on = [azurerm_key_vault.avd_kv]  # Ensure Key Vault is created first
+  depends_on = [azurerm_key_vault.avd_kv] # Ensure Key Vault is created first
 }
 
 # This resource block creates an access policy for Azure Key Vault.
