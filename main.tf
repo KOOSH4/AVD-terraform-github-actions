@@ -178,6 +178,7 @@ resource "azurerm_subnet_network_security_group_association" "avd_subnet_nsg" {
 }
 
 
+
 # This resource block creates an Azure Key Vault.
 # Azure Key Vault is a service that provides secure storage and management of sensitive information such as secrets, keys, and certificates.
 data "azurerm_client_config" "current" {}
@@ -189,19 +190,42 @@ resource "azurerm_key_vault" "avd_kv" {
   sku_name            = "standard"                                   # SKU for the Key Vault
 }
 
+
+# This resource block creates an access policy for Azure Key Vault.
+# An access policy defines the permissions for a user, group, or application to access secrets, keys, and certificates in the Key Vault.
+
+# Define access policy for the Service Principal
+resource "azurerm_key_vault_access_policy" "terraform" {
+  key_vault_id = azurerm_key_vault.avd_kv.id                  # ID of the Key Vault
+  tenant_id    = data.azurerm_client_config.current.tenant_id # Tenant ID
+  object_id    = data.azurerm_client_config.current.object_id # Service Principal ID
+
+  # Permissions for secrets
+  secret_permissions = [
+    "Get",    # Permission to retrieve secrets
+    "Set",    # Permission to create or update secrets
+    "Delete", # Permission to delete secrets
+    "List"    # Permission to list secrets
+  ]
+}
 # This resource block stores a secret in Azure Key Vault.
 # Azure Key Vault Secret is used to securely store and manage sensitive information such as passwords, tokens, and API keys.
 
 # Store Admin Password and username in Key Vault
 resource "azurerm_key_vault_secret" "admin_password" {
-  name         = "avd-admin-password"        # Name of the secret
-  value        = var.admin_password          # Initial value from GitHub Secrets
-  key_vault_id = azurerm_key_vault.avd_kv.id # ID of the Key Vault
+  name         = "avd-admin-password"
+  value        = var.admin_password
+  key_vault_id = azurerm_key_vault.avd_kv.id
+
+  depends_on = [azurerm_key_vault_access_policy.terraform] # ✅ Ensure policy is applied first
 }
+
 resource "azurerm_key_vault_secret" "admin_username" {
-  name         = "avd-admin-username"        # Name of the secret
-  value        = var.admin_username          # Initial value from GitHub Secrets
-  key_vault_id = azurerm_key_vault.avd_kv.id # ID of the Key Vault
+  name         = "avd-admin-username"
+  value        = var.admin_username
+  key_vault_id = azurerm_key_vault.avd_kv.id
+
+  depends_on = [azurerm_key_vault_access_policy.terraform] # ✅ Ensure policy is applied first
 }
 
 # This data block retrieves a secret from Azure Key Vault.
@@ -224,7 +248,7 @@ data "azurerm_key_vault_secret" "admin_username" {
 
 resource "azurerm_virtual_desktop_host_pool_registration_info" "avd_registration" {
   hostpool_id     = azurerm_virtual_desktop_host_pool.avd_host_pool.id
-  expiration_date = formatdate("YYYY-MM-DDTHH:MM:SSZ", timeadd(timestamp(), "24h")) # Token valid for 24 hours
+  expiration_date = formatdate("YYYY-MM-DD'T'HH:mm:ss'Z'", timeadd(timestamp(), "24h"))
 }
 
 
