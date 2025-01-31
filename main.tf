@@ -127,7 +127,7 @@ resource "azurerm_network_interface" "avd_nic" {
 
 resource "azurerm_network_security_group" "avd_nsg" {
   name                = "nsg-avd"
-  location            = var.location
+  location            = var.location2
   resource_group_name = azurerm_resource_group.rg-avd.name
 
   # Allow RDP Access (Modify source_address_prefix for security)
