@@ -367,3 +367,16 @@ resource "azurerm_storage_share" "fslogix_share" {
 
 # Show the status of the EncryptionAtHost feature in the Microsoft.Compute namespace (duration +10 min)
 # az feature show --namespace Microsoft.Compute --name EncryptionAtHost
+
+##############################
+# 1. Log Analytics Workspace #
+##############################
+
+resource "azurerm_log_analytics_workspace" "avd_logs" {
+  name                = "law-avd-logs"
+  location            = var.location2
+  resource_group_name = azurerm_resource_group.rg-avd.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+
+}
