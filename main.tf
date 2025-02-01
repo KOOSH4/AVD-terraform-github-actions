@@ -435,53 +435,62 @@ resource "azurerm_monitor_diagnostic_setting" "fslogix_sa_diag" {
   }
 }
 
-
 # This resource block creates diagnostic settings for an Azure Virtual Desktop (AVD) Host Pool.
 # Diagnostic settings are used to collect and send logs from Azure resources to different destinations, such as Log Analytics workspaces.
 
 resource "azurerm_monitor_diagnostic_setting" "avd_hostpool_diag" {
-  name                       = "diag-avd-hostpool"
-  target_resource_id         = azurerm_virtual_desktop_host_pool.avd_host_pool.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
+  name                       = "diag-avd-hostpool"                                # Name of the diagnostic setting
+  target_resource_id         = azurerm_virtual_desktop_host_pool.avd_host_pool.id # ID of the AVD Host Pool
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id        # ID of the Log Analytics workspace
 
+  # Enable Checkpoint Logs
   enabled_log {
-    category = "Checkpoint"
+    category = "Checkpoint" # Category of logs to collect
   }
 
+  # Enable Error Logs
   enabled_log {
-    category = "Error"
+    category = "Error" # Category of logs to collect
   }
 
+  # Enable Management Logs
   enabled_log {
-    category = "Management"
+    category = "Management" # Category of logs to collect
   }
 
+  # Enable Connection Logs
   enabled_log {
-    category = "Connection"
+    category = "Connection" # Category of logs to collect
   }
 
+  # Enable Host Registration Logs
   enabled_log {
-    category = "HostRegistration"
+    category = "HostRegistration" # Category of logs to collect
   }
 
+  # Enable Agent Health Status Logs
   enabled_log {
-    category = "AgentHealthStatus"
+    category = "AgentHealthStatus" # Category of logs to collect
   }
 
+  # Enable Network Data Logs
   enabled_log {
-    category = "NetworkData"
+    category = "NetworkData" # Category of logs to collect
   }
 
+  # Enable Connection Graphics Data Logs
   enabled_log {
-    category = "ConnectionGraphicsData"
+    category = "ConnectionGraphicsData" # Category of logs to collect
   }
 
+  # Enable Session Host Management Logs
   enabled_log {
-    category = "SessionHostManagement"
+    category = "SessionHostManagement" # Category of logs to collect
   }
 
+  # Enable Autoscale Evaluation Pooled Logs
   enabled_log {
-    category = "AutoscaleEvaluationPooled"
+    category = "AutoscaleEvaluationPooled" # Category of logs to collect
   }
 }
 
@@ -498,7 +507,8 @@ resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
   window_size         = "PT5M"
   frequency           = "PT1M"
 
-  target_resource_type = "Microsoft.Compute/virtualMachines"
+  target_resource_type     = "Microsoft.Compute/virtualMachines"
+  target_resource_location = var.location2
 
   criteria {
     metric_namespace = "Microsoft.Compute/virtualMachines"
