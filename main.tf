@@ -380,3 +380,40 @@ resource "azurerm_log_analytics_workspace" "avd_logs" {
   retention_in_days   = 30
 
 }
+
+##################################################
+# 2. Diagnostic Settings for AVD Virtual Machines #
+##################################################
+
+resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
+  for_each = { for vm in azurerm_windows_virtual_machine.avd_vm : vm.id => vm.name }
+
+  name                       = "diag-${each.value}"
+  target_resource_id         = each.key
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
+
+  log {
+    category = "GuestOSPerf"
+    enabled  = true
+    retention_policy {
+      enabled = false
+    }
+  }
+
+  log {
+    category = "Event" # Fixed: "WindowsEventLogs" is not valid
+    enabled  = true
+    retention_policy {
+      enabled = false
+    }
+  }
+
+  metric {
+    category = "AllMetrics"
+    enabled  = true
+    retention_policy {
+      enabled = false
+    }
+  }
+
+}
