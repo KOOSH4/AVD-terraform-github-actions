@@ -50,3 +50,11 @@ variable "admin_username" {
   type        = string
   sensitive   = true
 }
+
+variable "vm_names" {
+  type = map(string)
+  default = {
+    "vm1" = "avd-vm-1"
+    "vm2" = "avd-vm-2"
+  }
+}

@@ -110,17 +110,18 @@ resource "azurerm_subnet" "avd_subnet" {
 #
 # The block creates 2 NICs.
 resource "azurerm_network_interface" "avd_nic" {
-  count               = 2 # Number of VMs
-  name                = "nic-avd-${count.index + 1}"
+  for_each            = var.vm_names
+  name                = "nic-${each.value}"
   location            = var.location2
   resource_group_name = azurerm_resource_group.rg-avd.name
 
   ip_configuration {
     name                          = "internal"
-    subnet_id                     = azurerm_subnet.avd_subnet.id # Now it exists!
+    subnet_id                     = azurerm_subnet.avd_subnet.id
     private_ip_address_allocation = "Dynamic"
   }
 }
+
 
 # This resource block creates a Network Security Group (NSG) for Azure Virtual Desktop (AVD).
 # An NSG is used to control inbound and outbound traffic to network interfaces (NICs), VMs, and subnets.
@@ -276,15 +277,15 @@ resource "azurerm_virtual_desktop_host_pool_registration_info" "avd_registration
 
 
 resource "azurerm_windows_virtual_machine" "avd_vm" {
-  count               = var.vm_count
-  name                = "avd-vm-${count.index + 1}"
+  for_each            = var.vm_names
+  name                = each.value
   resource_group_name = azurerm_resource_group.rg-avd.name
   location            = var.location2
   size                = var.vm_size
   admin_username      = data.azurerm_key_vault_secret.admin_username.value
   admin_password      = data.azurerm_key_vault_secret.admin_password.value
 
-  network_interface_ids = [azurerm_network_interface.avd_nic[count.index].id]
+  network_interface_ids = [azurerm_network_interface.avd_nic[each.key].id]
 
   encryption_at_host_enabled = true
 
@@ -380,108 +381,3 @@ resource "azurerm_storage_share" "fslogix_share" {
 
 # This resource block creates an Azure Log Analytics Workspace.
 # A Log Analytics Workspace is used to collect and analyze log data from various Azure resources.
-
-resource "azurerm_log_analytics_workspace" "avd_logs" {
-  name                = "law-avd-logs"                     # Name of the Log Analytics Workspace
-  location            = var.location2                      # Location specified by the 'location2' variable
-  resource_group_name = azurerm_resource_group.rg-avd.name # Associated resource group
-  sku                 = "PerGB2018"                        # Pricing tier for the workspace
-  retention_in_days   = 30                                 # Number of days to retain log data
-}
-# This resource block creates diagnostic settings for Azure Virtual Desktop (AVD) Virtual Machines (VMs).
-# Diagnostic settings are used to collect and send logs and metrics from Azure resources to different destinations, such as Log Analytics workspaces.
-
-resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
-  count = length(azurerm_windows_virtual_machine.avd_vm)
-
-  name                       = "diag-avd-vm-${count.index + 1}"
-  target_resource_id         = azurerm_windows_virtual_machine.avd_vm[count.index].id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
-
-  enabled_log {
-    category = "PerformanceCounters"
-  }
-
-  enabled_log {
-    category = "Event"
-  }
-
-  metric {
-    category = "AllMetrics"
-    enabled  = true
-  }
-
-  depends_on = [azurerm_windows_virtual_machine.avd_vm]
-}
-
-
-
-# This resource block creates diagnostic settings for an FSLogix Storage Account.
-# Diagnostic settings are used to collect and send logs and metrics from Azure resources to different destinations, such as Log Analytics workspaces.
-
-# Diagnostic settings for FSLogix Storage Account
-resource "azurerm_monitor_diagnostic_setting" "fslogix_sa_diag" {
-  name                       = "diag-fslogix-storage"
-  target_resource_id         = azurerm_storage_account.fslogix_sa.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
-
-  enabled_log {
-    category = "Transaction" # Fixed: Storage accounts support "Transaction"
-  }
-
-  enabled_log {
-    category = "StorageWrite"
-  }
-
-  enabled_log {
-    category = "StorageDelete"
-  }
-}
-
-# This resource block creates diagnostic settings for an Azure Virtual Desktop (AVD) Host Pool.
-# Diagnostic settings are used to collect and send logs and metrics from Azure resources to different destinations, such as Log Analytics workspaces.
-
-# Diagnostic settings for AVD Host Pool
-resource "azurerm_monitor_diagnostic_setting" "avd_hostpool_diag" {
-  name                       = "diag-avd-hostpool"
-  target_resource_id         = azurerm_virtual_desktop_host_pool.avd_host_pool.id
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
-
-  enabled_log {
-    category = "AuditLogs"
-  }
-
-  enabled_log {
-    category = "OperationalLogs"
-  }
-
-  # Enable Metrics
-  metric {
-    category = "AllMetrics" # Category of metrics to collect
-    enabled  = true         # Enable collection of metrics
-  }
-}
-# This resource block creates an Azure Monitor Metric Alert for Azure Virtual Desktop (AVD) VMs.
-# Azure Monitor Metric Alerts are used to monitor the performance and health of Azure resources and trigger notifications or actions based on specified conditions.
-
-# This alert triggers if the average CPU usage across all AVD VMs exceeds 80% for 5 minutes.
-resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
-  name                = "avd-vm-high-cpu"
-  resource_group_name = azurerm_resource_group.rg-avd.name
-  scopes              = [for vm in azurerm_windows_virtual_machine.avd_vm : vm.id]
-  description         = "Alert when average CPU usage on AVD VMs exceeds 80% for 5 minutes."
-  severity            = 2
-  window_size         = "PT5M"
-  frequency           = "PT1M"
-
-  target_resource_type = "Microsoft.Compute/virtualMachines" # Fixed: Specify the type
-
-
-  criteria {
-    metric_namespace = "Microsoft.Compute/virtualMachines"
-    metric_name      = "Percentage CPU"
-    aggregation      = "Average"
-    operator         = "GreaterThan"
-    threshold        = 80
-  }
-}
