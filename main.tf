@@ -277,13 +277,13 @@ resource "azurerm_virtual_desktop_host_pool_registration_info" "avd_registration
 
 
 resource "azurerm_windows_virtual_machine" "avd_vm" {
-  for_each            = var.vm_names
-  name                = each.value
-  resource_group_name = azurerm_resource_group.rg-avd.name
-  location            = var.location2
-  size                = var.vm_size
-  admin_username      = data.azurerm_key_vault_secret.admin_username.value
-  admin_password      = data.azurerm_key_vault_secret.admin_password.value
+  for_each              = var.vm_names
+  name                  = each.value
+  resource_group_name   = azurerm_resource_group.rg-avd.name
+  location              = var.location2
+  size                  = var.vm_size
+  admin_username        = data.azurerm_key_vault_secret.admin_username.value
+  admin_password        = data.azurerm_key_vault_secret.admin_password.value
   network_interface_ids = [azurerm_network_interface.avd_nic[each.key].id]
 
   encryption_at_host_enabled = true
@@ -374,15 +374,15 @@ resource "azurerm_storage_share" "fslogix_share" {
 # Role assignments are used to grant access to Azure resources by assigning roles to users, groups, or applications.
 
 resource "azurerm_role_assignment" "fslogix_vm_role" {
-  for_each = azurerm_windows_virtual_machine.avd_vm  # Iterate over each AVD VM
+  for_each = azurerm_windows_virtual_machine.avd_vm # Iterate over each AVD VM
 
-  scope                = azurerm_storage_account.fslogix_sa.id  # Scope of the role assignment (ID of the FSLogix Storage Account)
-  role_definition_name = "Storage File Data SMB Share Contributor"  # Role to be assigned, allowing access to file shares
-  principal_id         = each.value.identity[0].principal_id  # ID of the VM's managed identity
+  scope                = azurerm_storage_account.fslogix_sa.id     # Scope of the role assignment (ID of the FSLogix Storage Account)
+  role_definition_name = "Storage File Data SMB Share Contributor" # Role to be assigned, allowing access to file shares
+  principal_id         = each.value.identity[0].principal_id       # ID of the VM's managed identity
 
   depends_on = [
-    azurerm_storage_account.fslogix_sa,  # Ensure the storage account is created first
-    azurerm_windows_virtual_machine.avd_vm  # Ensure the VMs are created first
+    azurerm_storage_account.fslogix_sa,    # Ensure the storage account is created first
+    azurerm_windows_virtual_machine.avd_vm # Ensure the VMs are created first
   ]
 }
 
