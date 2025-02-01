@@ -76,8 +76,8 @@ jobs:
 
     - name: Import Azure Key Vault Secrets
       run: |
-        terraform import azurerm_key_vault_secret.admin_password "https://kyvlt-avd-1.vault.azure.net/secrets/avd-admin-password"
-        terraform import azurerm_key_vault_secret.admin_username "https://kyvlt-avd-1.vault.azure.net/secrets/avd-admin-username"
+        terraform import azurerm_key_vault_secret.admin_password "https://kyvlt-avd-1.vault.azure.net/secrets/avd-admin-password/b7214fa138834ee8991c2ca262fc86f5"
+        terraform import azurerm_key_vault_secret.admin_username "https://kyvlt-avd-1.vault.azure.net/secrets/avd-admin-username/b6e92386e2a440efaa2275104b9c0fb5"
     # Save plan to artifacts  
     - name: Publish Terraform Plan
       uses: actions/upload-artifact@v4
