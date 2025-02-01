@@ -349,14 +349,6 @@ resource "azurerm_storage_share" "fslogix_share" {
   storage_account_id = azurerm_storage_account.fslogix_sa.id # ID of the associated storage account
   quota              = 1024                                  # Quota for the storage share in GB
 }
-# This resource block creates an Azure Storage Share for FSLogix.
-# An Azure Storage Share is a file share in an Azure Storage Account, used to store and manage files.
-
-resource "azurerm_storage_share" "fslogix_share" {
-  name               = "fslogix"                             # Name of the storage share
-  storage_account_id = azurerm_storage_account.fslogix_sa.id # ID of the associated storage account
-  quota              = 1024                                  # Quota for the storage share in GB
-}
 
 
 
