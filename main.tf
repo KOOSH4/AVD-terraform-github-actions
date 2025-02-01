@@ -335,3 +335,14 @@ resource "azurerm_private_endpoint" "avd_kv_pe" {
     subresource_names              = ["vault"]
   }
 }
+# This block contains Azure CLI commands to register and show features for the Microsoft.Compute namespace.
+# These commands are used to enable specific features in Azure, such as EncryptionAtHost, which provides encryption for data at rest on the host machine.
+
+# Register the EncryptionAtHost feature in the Microsoft.Compute namespace
+# az feature register --namespace Microsoft.Compute --name EncryptionAtHost
+
+# Register the Microsoft.Compute namespace with Azure Resource Manager
+# az provider register --namespace Microsoft.Compute
+
+# Show the status of the EncryptionAtHost feature in the Microsoft.Compute namespace (duration +10 min)
+# az feature show --namespace Microsoft.Compute --name EncryptionAtHost
