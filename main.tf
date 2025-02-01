@@ -396,27 +396,26 @@ resource "azurerm_log_analytics_workspace" "avd_logs" {
 # Diagnostic settings are used to collect and send logs and metrics from Azure resources to different destinations, such as Log Analytics workspaces.
 
 resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
-  for_each = { for vm in azurerm_windows_virtual_machine.avd_vm : vm.id => vm.name } # Iterate over each AVD VM
+  for_each = toset(azurerm_windows_virtual_machine.avd_vm[*].id)
 
-  name                       = "diag-${each.value}"                        # Name of the diagnostic setting, including VM name
-  target_resource_id         = each.key                                    # ID of the AVD VM
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id # ID of the Log Analytics workspace
+  name                       = "diag-${each.key}"
+  target_resource_id         = each.key
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
 
-  # Enable Guest OS Performance Logs
   enabled_log {
-    category = "GuestOSPerf" # Category of logs to collect
+    category = "GuestOSPerf"
   }
 
-  # Enable Event Logs
   enabled_log {
-    category = "Event" # Category of logs to collect (fixed: "WindowsEventLogs" is not valid)
+    category = "Event"
   }
 
-  # Enable Metrics
   metric {
-    category = "AllMetrics" # Category of metrics to collect
-    enabled  = true         # Enable collection of metrics
+    category = "AllMetrics"
+    enabled  = true
   }
+
+  depends_on = [azurerm_windows_virtual_machine.avd_vm] # Ensures VMs are created first
 }
 
 
