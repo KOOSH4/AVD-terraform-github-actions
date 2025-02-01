@@ -341,6 +341,24 @@ resource "azurerm_private_endpoint" "avd_kv_pe" {
   }
 }
 
+
+# This resource block creates an Azure Storage Account for FSLogix.
+# An Azure Storage Account provides a scalable and secure storage solution for data objects, including blobs, files, queues, and tables.
+
+resource "azurerm_storage_account" "fslogix_sa" {
+  name                     = "fslogixavdint1"                   # Storage account name (must be globally unique)
+  resource_group_name      = azurerm_resource_group.rg-avd.name # Associated resource group
+  location                 = var.location2                      # Location specified by the 'location2' variable
+  account_tier             = "Standard"                         # Performance tier (Standard or Premium)
+  account_replication_type = "LRS"                              # Replication type (Locally-redundant storage)
+  account_kind             = "StorageV2"                        # Storage account kind (StorageV2 for general-purpose v2)
+
+  tags = {
+    Environment = "AVD"     # Environment tag
+    Purpose     = "FSLogix" # Purpose tag
+  }
+}
+
 # This resource block creates an Azure Storage Share for FSLogix.
 # An Azure Storage Share is a file share in an Azure Storage Account, used to store and manage files.
 
