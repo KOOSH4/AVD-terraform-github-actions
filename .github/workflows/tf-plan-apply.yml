@@ -56,7 +56,12 @@ jobs:
     - name: Terraform Format
       run: terraform fmt -check
       
-    
+    - name: terraform state rm azurerm_windows_virtual_machine.avd_vm[0]
+      run: terraform state rm azurerm_windows_virtual_machine.avd_vm[0]
+   
+    - name: terraform state rm azurerm_windows_virtual_machine.avd_vm[1]
+      run: terraform state rm azurerm_windows_virtual_machine.avd_vm[1]
+
     - name: Import the VM1
       run: terraform import azurerm_windows_virtual_machine.avd_vm[0] /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-AVD-pool-dewc/providers/Microsoft.Compute/virtualMachines/avd-vm-1
     
