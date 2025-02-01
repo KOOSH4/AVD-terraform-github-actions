@@ -286,7 +286,6 @@ resource "azurerm_windows_virtual_machine" "avd_vm" {
 
   network_interface_ids = [azurerm_network_interface.avd_nic[count.index].id]
 
-  # Enable encryption at host
   encryption_at_host_enabled = true
 
   os_disk {
@@ -303,9 +302,6 @@ resource "azurerm_windows_virtual_machine" "avd_vm" {
 
   depends_on = [azurerm_virtual_desktop_host_pool_registration_info.avd_registration]
 
-  # If the installation of the AVD agent via custom data is required,
-  # instruct Checkov to skip the VM extensions check.
-  # checkov:skip=CKV_AZURE_50: AVD agent installation is required for functionality.
   custom_data = base64encode(<<EOF
 <powershell>
 # Install AVD Agent
@@ -316,6 +312,12 @@ Start-Process "msiexec.exe" -ArgumentList "/i C:\avdagent.msi /quiet /norestart"
 $token = "${azurerm_virtual_desktop_host_pool_registration_info.avd_registration.token}"
 $cmd = "C:\Program Files\Microsoft RDInfra\Agent\RDAgentBootLoader.exe /token:$token"
 Start-Process -FilePath "powershell" -ArgumentList "-Command $cmd" -NoNewWindow -Wait
+
+# Configure FSLogix profile location
+# Create the FSLogix Profiles registry key if it does not exist
+New-Item -Path "HKLM:\SOFTWARE\FSLogix\Profiles" -Force
+# Set the file share UNC path for FSLogix profiles
+New-ItemProperty -Path "HKLM:\SOFTWARE\FSLogix\Profiles" -Name "VHDLocations" -Value "\\${azurerm_storage_account.fslogix_sa.name}.file.core.windows.net\\${azurerm_storage_share.fslogix_share.name}" -PropertyType String -Force
 </powershell>
 EOF
   )
@@ -335,6 +337,25 @@ resource "azurerm_private_endpoint" "avd_kv_pe" {
     subresource_names              = ["vault"]
   }
 }
+
+
+resource "azurerm_storage_account" "fslogix_sa" {
+  name                     = "fslogixavdint1" # e.g. fslogixa1b2c3d4
+  resource_group_name      = azurerm_resource_group.rg-avd.name
+  location                 = var.location2
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+  account_kind             = "StorageV2"
+}
+
+resource "azurerm_storage_share" "fslogix_share" {
+  name               = "fslogix"
+  storage_account_id = azurerm_storage_account.fslogix_sa.id
+  quota              = 1024 # Quota in GB
+}
+
+
+
 # This block contains Azure CLI commands to register and show features for the Microsoft.Compute namespace.
 # These commands are used to enable specific features in Azure, such as EncryptionAtHost, which provides encryption for data at rest on the host machine.
 
