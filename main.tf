@@ -214,7 +214,6 @@ resource "azurerm_key_vault_secret" "admin_password" {
   value        = var.admin_password
   key_vault_id = azurerm_key_vault.avd_kv.id
 
-  depends_on = [azurerm_key_vault_access_policy.terraform] # ✅ Ensure policy is applied first
 }
 
 resource "azurerm_key_vault_secret" "admin_username" {
@@ -222,7 +221,6 @@ resource "azurerm_key_vault_secret" "admin_username" {
   value        = var.admin_username
   key_vault_id = azurerm_key_vault.avd_kv.id
 
-  depends_on = [azurerm_key_vault_access_policy.terraform] # ✅ Ensure policy is applied first
 }
 
 # This data block retrieves a secret from Azure Key Vault.
