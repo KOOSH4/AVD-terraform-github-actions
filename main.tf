@@ -324,34 +324,38 @@ EOF
 }
 
 
+# This resource block creates a private endpoint for an Azure Key Vault.
+# A private endpoint allows secure access to Azure services over a private link, avoiding exposure to the public internet.
+
 resource "azurerm_private_endpoint" "avd_kv_pe" {
-  name                = "pe-kv-avd"
-  location            = var.location2
-  resource_group_name = azurerm_resource_group.rg-avd.name
-  subnet_id           = azurerm_subnet.avd_subnet.id
+  name                = "pe-kv-avd"                        # Name of the private endpoint
+  location            = var.location2                      # Location specified by the 'location2' variable
+  resource_group_name = azurerm_resource_group.rg-avd.name # Associated resource group
+  subnet_id           = azurerm_subnet.avd_subnet.id       # ID of the subnet where the private endpoint will be created
 
   private_service_connection {
-    name                           = "connection-kv-avd"
-    is_manual_connection           = false
-    private_connection_resource_id = azurerm_key_vault.avd_kv.id
-    subresource_names              = ["vault"]
+    name                           = "connection-kv-avd"         # Name of the private endpoint connection
+    is_manual_connection           = false                       # Indicates if the connection is manually approved
+    private_connection_resource_id = azurerm_key_vault.avd_kv.id # ID of the Azure Key Vault
+    subresource_names              = ["vault"]                   # Subresource names for the private endpoint
   }
 }
 
-
-resource "azurerm_storage_account" "fslogix_sa" {
-  name                     = "fslogixavdint1" # e.g. fslogixa1b2c3d4
-  resource_group_name      = azurerm_resource_group.rg-avd.name
-  location                 = var.location2
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
-  account_kind             = "StorageV2"
-}
+# This resource block creates an Azure Storage Share for FSLogix.
+# An Azure Storage Share is a file share in an Azure Storage Account, used to store and manage files.
 
 resource "azurerm_storage_share" "fslogix_share" {
-  name               = "fslogix"
-  storage_account_id = azurerm_storage_account.fslogix_sa.id
-  quota              = 1024 # Quota in GB
+  name               = "fslogix"                             # Name of the storage share
+  storage_account_id = azurerm_storage_account.fslogix_sa.id # ID of the associated storage account
+  quota              = 1024                                  # Quota for the storage share in GB
+}
+# This resource block creates an Azure Storage Share for FSLogix.
+# An Azure Storage Share is a file share in an Azure Storage Account, used to store and manage files.
+
+resource "azurerm_storage_share" "fslogix_share" {
+  name               = "fslogix"                             # Name of the storage share
+  storage_account_id = azurerm_storage_account.fslogix_sa.id # ID of the associated storage account
+  quota              = 1024                                  # Quota for the storage share in GB
 }
 
 
@@ -368,52 +372,113 @@ resource "azurerm_storage_share" "fslogix_share" {
 # Show the status of the EncryptionAtHost feature in the Microsoft.Compute namespace (duration +10 min)
 # az feature show --namespace Microsoft.Compute --name EncryptionAtHost
 
-##############################
-# 1. Log Analytics Workspace #
-##############################
+# This resource block creates an Azure Log Analytics Workspace.
+# A Log Analytics Workspace is used to collect and analyze log data from various Azure resources.
 
 resource "azurerm_log_analytics_workspace" "avd_logs" {
-  name                = "law-avd-logs"
-  location            = var.location2
-  resource_group_name = azurerm_resource_group.rg-avd.name
-  sku                 = "PerGB2018"
-  retention_in_days   = 30
-
+  name                = "law-avd-logs"                     # Name of the Log Analytics Workspace
+  location            = var.location2                      # Location specified by the 'location2' variable
+  resource_group_name = azurerm_resource_group.rg-avd.name # Associated resource group
+  sku                 = "PerGB2018"                        # Pricing tier for the workspace
+  retention_in_days   = 30                                 # Number of days to retain log data
 }
-
-##################################################
-# 2. Diagnostic Settings for AVD Virtual Machines #
-##################################################
+# This resource block creates diagnostic settings for Azure Virtual Desktop (AVD) Virtual Machines (VMs).
+# Diagnostic settings are used to collect and send logs and metrics from Azure resources to different destinations, such as Log Analytics workspaces.
 
 resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
-  for_each = { for vm in azurerm_windows_virtual_machine.avd_vm : vm.id => vm.name }
+  for_each = { for vm in azurerm_windows_virtual_machine.avd_vm : vm.id => vm.name } # Iterate over each AVD VM
 
-  name                       = "diag-${each.value}"
-  target_resource_id         = each.key
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
+  name                       = "diag-${each.value}"                        # Name of the diagnostic setting, including VM name
+  target_resource_id         = each.key                                    # ID of the AVD VM
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id # ID of the Log Analytics workspace
 
-  log {
-    category = "GuestOSPerf"
-    enabled  = true
-    retention_policy {
-      enabled = false
-    }
+  # Enable Guest OS Performance Logs
+  enabled_log {
+    category = "GuestOSPerf" # Category of logs to collect
   }
 
-  log {
-    category = "Event" # Fixed: "WindowsEventLogs" is not valid
-    enabled  = true
-    retention_policy {
-      enabled = false
-    }
+  # Enable Event Logs
+  enabled_log {
+    category = "Event" # Category of logs to collect (fixed: "WindowsEventLogs" is not valid)
   }
 
+  # Enable Metrics
   metric {
-    category = "AllMetrics"
-    enabled  = true
-    retention_policy {
-      enabled = false
-    }
+    category = "AllMetrics" # Category of metrics to collect
+    enabled  = true         # Enable collection of metrics
+  }
+}
+
+
+
+# This resource block creates diagnostic settings for an FSLogix Storage Account.
+# Diagnostic settings are used to collect and send logs and metrics from Azure resources to different destinations, such as Log Analytics workspaces.
+
+# Diagnostic settings for FSLogix Storage Account
+resource "azurerm_monitor_diagnostic_setting" "fslogix_sa_diag" {
+  name                       = "diag-fslogix-storage"                      # Name of the diagnostic setting
+  target_resource_id         = azurerm_storage_account.fslogix_sa.id       # ID of the FSLogix Storage Account
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id # ID of the Log Analytics workspace
+
+  # Enable Storage Read Logs
+  enabled_log {
+    category = "StorageRead" # Category of logs to collect
   }
 
+  # Enable Storage Write Logs
+  enabled_log {
+    category = "StorageWrite" # Category of logs to collect
+  }
+
+  # Enable Storage Delete Logs
+  enabled_log {
+    category = "StorageDelete" # Category of logs to collect
+  }
+}
+
+# This resource block creates diagnostic settings for an Azure Virtual Desktop (AVD) Host Pool.
+# Diagnostic settings are used to collect and send logs and metrics from Azure resources to different destinations, such as Log Analytics workspaces.
+
+# Diagnostic settings for AVD Host Pool
+resource "azurerm_monitor_diagnostic_setting" "avd_hostpool_diag" {
+  name                       = "diag-avd-hostpool"                                # Name of the diagnostic setting
+  target_resource_id         = azurerm_virtual_desktop_host_pool.avd_host_pool.id # ID of the AVD Host Pool
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id        # ID of the Log Analytics workspace
+
+  # Enable Audit Logs
+  enabled_log {
+    category = "AuditLogs" # Category of logs to collect
+  }
+
+  # Enable Operational Logs
+  enabled_log {
+    category = "OperationalLogs" # Category of logs to collect
+  }
+
+  # Enable Metrics
+  metric {
+    category = "AllMetrics" # Category of metrics to collect
+    enabled  = true         # Enable collection of metrics
+  }
+}
+# This resource block creates an Azure Monitor Metric Alert for Azure Virtual Desktop (AVD) VMs.
+# Azure Monitor Metric Alerts are used to monitor the performance and health of Azure resources and trigger notifications or actions based on specified conditions.
+
+# This alert triggers if the average CPU usage across all AVD VMs exceeds 80% for 5 minutes.
+resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
+  name                = "avd-vm-high-cpu"                                                    # Name of the alert
+  resource_group_name = azurerm_resource_group.rg-avd.name                                   # Associated resource group
+  scopes              = [for vm in azurerm_windows_virtual_machine.avd_vm : vm.id]           # Scope includes all AVD VMs
+  description         = "Alert when average CPU usage on AVD VMs exceeds 80% for 5 minutes." # Description of the alert
+  severity            = 2                                                                    # Severity level of the alert (1 is critical, 2 is warning, etc.)
+  window_size         = "PT5M"                                                               # Time window for evaluating the metric (5 minutes)
+  frequency           = "PT1M"                                                               # Frequency of the alert evaluation (1 minute)
+
+  criteria {
+    metric_namespace = "Microsoft.Compute/virtualMachines" # Namespace of the metric
+    metric_name      = "Percentage CPU"                    # Name of the metric to monitor
+    aggregation      = "Average"                           # Aggregation type for the metric
+    operator         = "GreaterThan"                       # Comparison operator
+    threshold        = 80                                  # Threshold value for the metric (80% CPU usage)
+  }
 }
