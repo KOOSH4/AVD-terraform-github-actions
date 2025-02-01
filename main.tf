@@ -192,11 +192,13 @@ resource "azurerm_key_vault" "avd_kv" {
   public_network_access_enabled = true                                         # $$$$$$enable public access
 
   network_acls {
-    default_action = "Deny"          # Deny access by default
-    bypass         = "AzureServices" # Allow trusted Azure services to bypass ACLs if needed
-    // You can also add specific ip_rules here if you wish to allow access from certain IP addresses.
+    bypass         = "AzureServices"
+    default_action = "Allow"
+    // ip_rules can be specified if you wish to restrict to specific IP addresses
+    // ip_rules = ["x.x.x.x/32", "y.y.y.y/32"]
   }
 }
+
 
 
 # This resource block assigns a role to a principal for accessing Azure Key Vault secrets.
