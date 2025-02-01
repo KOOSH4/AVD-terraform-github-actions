@@ -189,7 +189,7 @@ resource "azurerm_key_vault" "avd_kv" {
   tenant_id                     = data.azurerm_client_config.current.tenant_id # Tenant ID
   sku_name                      = "standard"                                   # SKU for the Key Vault
   purge_protection_enabled      = true                                         # Enable purge protection
-  public_network_access_enabled = false                                        # Disable public access
+  public_network_access_enabled = true                                         # $$$$$$enable public access
 
   network_acls {
     default_action = "Deny"          # Deny access by default
