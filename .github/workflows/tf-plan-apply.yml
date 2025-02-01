@@ -63,9 +63,7 @@ jobs:
     - name: Import the VM2
       run: terraform import azurerm_windows_virtual_machine.avd_vm[1] /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-AVD-pool-dewc/providers/Microsoft.Compute/virtualMachines/avd-vm-2
     
-    - name: Import the Key Vault Access Policy
-      run: terraform import azurerm_key_vault_access_policy.policy /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-AVD-pool-dewc/providers/Microsoft.KeyVault/vaults/kyvlt-avd-1/objectId/cf48698f-3853-4289-9f5df76de8f7
-    
+ 
       # Generates an execution plan for Terraform
     # An exit code of 0 indicated no changes, 1 a terraform failure, 2 there are pending changes.
     - name: Terraform Plan
