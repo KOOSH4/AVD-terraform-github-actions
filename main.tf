@@ -284,6 +284,9 @@ resource "azurerm_windows_virtual_machine" "avd_vm" {
 
   network_interface_ids = [azurerm_network_interface.avd_nic[count.index].id]
 
+  # Enable encryption at host
+  encryption_at_host_enabled = true
+
   os_disk {
     caching              = "ReadWrite"
     storage_account_type = "StandardSSD_LRS"
@@ -296,9 +299,11 @@ resource "azurerm_windows_virtual_machine" "avd_vm" {
     version   = "latest"
   }
 
-  # Ensure the host pool registration is created before VMs
   depends_on = [azurerm_virtual_desktop_host_pool_registration_info.avd_registration]
 
+  # If the installation of the AVD agent via custom data is required,
+  # instruct Checkov to skip the VM extensions check.
+  # checkov:skip=CKV_AZURE_50: AVD agent installation is required for functionality.
   custom_data = base64encode(<<EOF
 <powershell>
 # Install AVD Agent
@@ -312,4 +317,19 @@ Start-Process -FilePath "powershell" -ArgumentList "-Command $cmd" -NoNewWindow 
 </powershell>
 EOF
   )
+}
+
+
+resource "azurerm_private_endpoint" "avd_kv_pe" {
+  name                = "pe-kv-avd"
+  location            = var.location2
+  resource_group_name = azurerm_resource_group.rg-avd.name
+  subnet_id           = azurerm_subnet.avd_subnet.id
+
+  private_service_connection {
+    name                           = "connection-kv-avd"
+    is_manual_connection           = false
+    private_connection_resource_id = azurerm_key_vault.avd_kv.id
+    subresource_names              = ["vault"]
+  }
 }
