@@ -56,11 +56,12 @@ jobs:
     - name: Terraform Format
       run: terraform fmt -check
       
+    
     - name: Import the VM1
-      run: terraform import azurerm_virtual_machine.vm1 /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-AVD-pool-dewc/providers/Microsoft.Compute/virtualMachines/avd-vm-1
+      run: terraform import azurerm_windows_virtual_machine.avd_vm[0] /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-AVD-pool-dewc/providers/Microsoft.Compute/virtualMachines/avd-vm-1
     
     - name: Import the VM2
-      run: terraform import azurerm_virtual_machine.vm2 /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-AVD-pool-dewc/providers/Microsoft.Compute/virtualMachines/avd-vm-2
+      run: terraform import azurerm_windows_virtual_machine.avd_vm[1] /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-AVD-pool-dewc/providers/Microsoft.Compute/virtualMachines/avd-vm-2
     
     - name: Import the Key Vault Access Policy
       run: terraform import azurerm_key_vault_access_policy.policy /subscriptions/${{ secrets.AZURE_SUBSCRIPTION_ID }}/resourceGroups/rg-AVD-pool-dewc/providers/Microsoft.KeyVault/vaults/kyvlt-avd-1/objectId/cf48698f-3853-4289-9f5df76de8f7
