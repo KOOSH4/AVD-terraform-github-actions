@@ -420,66 +420,92 @@ resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
 # Diagnostic settings are used to collect and send logs from Azure resources to different destinations, such as Log Analytics workspaces.
 
 resource "azurerm_monitor_diagnostic_setting" "fslogix_sa_diag" {
-  name                       = "diag-fslogix-storage"                      # Name of the diagnostic setting
-  target_resource_id         = azurerm_storage_account.fslogix_sa.id       # ID of the FSLogix Storage Account
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id # ID of the Log Analytics workspace
+  name                       = "diag-fslogix-storage"
+  target_resource_id         = azurerm_storage_account.fslogix_sa.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
 
-  # Enable Transaction Logs
-  enabled_log {
-    category = "Transaction" # Category of logs to collect
+  metric {
+    category = "Capacity"
+    enabled  = true
   }
 
-  # Enable Storage Read Logs
-  enabled_log {
-    category = "StorageRead" # Category of logs to collect
-  }
-
-  # Enable Storage Delete Logs
-  enabled_log {
-    category = "StorageDelete" # Category of logs to collect
+  metric {
+    category = "Transaction"
+    enabled  = true
   }
 }
+
 
 # This resource block creates diagnostic settings for an Azure Virtual Desktop (AVD) Host Pool.
 # Diagnostic settings are used to collect and send logs from Azure resources to different destinations, such as Log Analytics workspaces.
 
 resource "azurerm_monitor_diagnostic_setting" "avd_hostpool_diag" {
-  name                       = "diag-avd-hostpool"                                # Name of the diagnostic setting
-  target_resource_id         = azurerm_virtual_desktop_host_pool.avd_host_pool.id # ID of the AVD Host Pool
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id        # ID of the Log Analytics workspace
+  name                       = "diag-avd-hostpool"
+  target_resource_id         = azurerm_virtual_desktop_host_pool.avd_host_pool.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
 
-  # Enable Audit Logs
   enabled_log {
-    category = "AuditLogs" # Category of logs to collect
+    category = "Checkpoint"
   }
 
-  # Enable Operational Logs
   enabled_log {
-    category = "OperationalLogs" # Category of logs to collect
+    category = "Error"
   }
 
-  # Note: Metrics block is removed as AVD Host Pool does not support metrics
+  enabled_log {
+    category = "Management"
+  }
+
+  enabled_log {
+    category = "Connection"
+  }
+
+  enabled_log {
+    category = "HostRegistration"
+  }
+
+  enabled_log {
+    category = "AgentHealthStatus"
+  }
+
+  enabled_log {
+    category = "NetworkData"
+  }
+
+  enabled_log {
+    category = "ConnectionGraphicsData"
+  }
+
+  enabled_log {
+    category = "SessionHostManagement"
+  }
+
+  enabled_log {
+    category = "AutoscaleEvaluationPooled"
+  }
 }
+
 
 # This resource block creates a CPU monitoring alert for Azure Virtual Desktop (AVD) Virtual Machines (VMs).
 # Azure Monitor Metric Alerts are used to monitor the performance and health of Azure resources and trigger notifications or actions based on specified conditions.
 
 resource "azurerm_monitor_metric_alert" "avd_cpu_alert" {
-  name                = "avd-vm-high-cpu"                                                    # Name of the alert
-  resource_group_name = azurerm_resource_group.rg-avd.name                                   # Associated resource group
-  scopes              = [for vm in azurerm_windows_virtual_machine.avd_vm : vm.id]           # Scope includes all AVD VMs
-  description         = "Alert when average CPU usage on AVD VMs exceeds 80% for 5 minutes." # Description of the alert
-  severity            = 2                                                                    # Severity level of the alert (1 is critical, 2 is warning, etc.)
-  window_size         = "PT5M"                                                               # Time window for evaluating the metric (5 minutes)
-  frequency           = "PT1M"                                                               # Frequency of the alert evaluation (1 minute)
+  name                = "avd-vm-high-cpu"
+  resource_group_name = azurerm_resource_group.rg-avd.name
+  scopes              = [for vm in azurerm_windows_virtual_machine.avd_vm : vm.id]
+  description         = "Alert when average CPU usage on AVD VMs exceeds 80% for 5 minutes."
+  severity            = 2
+  window_size         = "PT5M"
+  frequency           = "PT1M"
 
-  target_resource_type = "Microsoft.Compute/virtualMachines" # Specify the type of resource to monitor
+  target_resource_type = "Microsoft.Compute/virtualMachines"
 
   criteria {
-    metric_namespace = "Microsoft.Compute/virtualMachines" # Namespace of the metric
-    metric_name      = "Percentage CPU"                    # Name of the metric to monitor
-    aggregation      = "Average"                           # Aggregation type for the metric
-    operator         = "GreaterThan"                       # Comparison operator
-    threshold        = 80                                  # Threshold value for the metric (80% CPU usage)
+    metric_namespace = "Microsoft.Compute/virtualMachines"
+    metric_name      = "Percentage CPU"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 80
   }
 }
+
