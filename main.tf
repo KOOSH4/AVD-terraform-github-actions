@@ -183,16 +183,16 @@ resource "azurerm_subnet_network_security_group_association" "avd_subnet_nsg" {
 # Azure Key Vault is a service that provides secure storage and management of sensitive information such as secrets, keys, and certificates.
 data "azurerm_client_config" "current" {}
 resource "azurerm_key_vault" "avd_kv" {
-  name                        = "kyvlt-avd-1"                                # Key Vault name
-  location                    = var.location2                                # Location specified by the variable
-  resource_group_name         = azurerm_resource_group.rg-avd.name           # Associated resource group
-  tenant_id                   = data.azurerm_client_config.current.tenant_id # Tenant ID
-  sku_name                    = "standard"                                   # SKU for the Key Vault
-  purge_protection_enabled    = true                                         # Enable purge protection
-  public_network_access_enabled = false                                      # Disable public access
+  name                          = "kyvlt-avd-1"                                # Key Vault name
+  location                      = var.location2                                # Location specified by the variable
+  resource_group_name           = azurerm_resource_group.rg-avd.name           # Associated resource group
+  tenant_id                     = data.azurerm_client_config.current.tenant_id # Tenant ID
+  sku_name                      = "standard"                                   # SKU for the Key Vault
+  purge_protection_enabled      = true                                         # Enable purge protection
+  public_network_access_enabled = false                                        # Disable public access
 
   network_acls {
-    default_action = "Deny"        # Deny access by default
+    default_action = "Deny"          # Deny access by default
     bypass         = "AzureServices" # Allow trusted Azure services to bypass ACLs if needed
     // You can also add specific ip_rules here if you wish to allow access from certain IP addresses.
   }
@@ -233,19 +233,19 @@ resource "azurerm_key_vault_access_policy" "terraform" {
 
 # Store Admin Password and username in Key Vault
 resource "azurerm_key_vault_secret" "admin_password" {
-  name          = "avd-admin-password"
-  value         = var.admin_password
-  key_vault_id  = azurerm_key_vault.avd_kv.id
-  content_type  = "password"                                    # Provides context for the secret
-  expiration_date = timeadd(timestamp(), "8760h")             # Expires in roughly 1 year
+  name            = "avd-admin-password"
+  value           = var.admin_password
+  key_vault_id    = azurerm_key_vault.avd_kv.id
+  content_type    = "password"                    # Provides context for the secret
+  expiration_date = timeadd(timestamp(), "8760h") # Expires in roughly 1 year
 
 }
 resource "azurerm_key_vault_secret" "admin_username" {
-  name          = "avd-admin-username"
-  value         = var.admin_username
-  key_vault_id  = azurerm_key_vault.avd_kv.id
-  content_type  = "username"                                    # Provides context for the secret
-  expiration_date = timeadd(timestamp(), "8760h")             # Expires in roughly 1 year
+  name            = "avd-admin-username"
+  value           = var.admin_username
+  key_vault_id    = azurerm_key_vault.avd_kv.id
+  content_type    = "username"                    # Provides context for the secret
+  expiration_date = timeadd(timestamp(), "8760h") # Expires in roughly 1 year
 
 }
 
