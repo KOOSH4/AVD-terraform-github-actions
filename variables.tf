@@ -58,3 +58,14 @@ variable "vm_names" {
     "vm2" = "avd-vm-2"
   }
 }
+
+
+variable "rdsh_count" {
+  description = "Number of session hosts to deploy"
+  default     = 2
+}
+
+variable "prefix" {
+  description = "Naming prefix for resources"
+  default     = "avd"
+}

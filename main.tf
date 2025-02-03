@@ -120,7 +120,7 @@ resource "azurerm_network_interface" "avd_vm_nic" {
   count               = var.rdsh_count
   name                = "${var.prefix}-${count.index + 1}-nic"
   resource_group_name = azurerm_resource_group.rg-avd.name
-  location            = var.location
+  location            = var.location2
 
   ip_configuration {
     name                          = "nic${count.index + 1}_config"
@@ -287,7 +287,7 @@ resource "azurerm_windows_virtual_machine" "avd_vm" {
   count                 = var.rdsh_count
   name                  = "${var.prefix}-${count.index + 1}"
   resource_group_name   = azurerm_resource_group.rg-avd.name
-  location              = var.location
+  location              = var.location2
   size                  = var.vm_size
   network_interface_ids = [azurerm_network_interface.avd_vm_nic[count.index].id]
   admin_username        = data.azurerm_key_vault_secret.admin_username.value
