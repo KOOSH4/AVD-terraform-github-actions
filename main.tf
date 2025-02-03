@@ -24,8 +24,7 @@ terraform {
 }
 
 provider "azurerm" {
-  resource_provider_registrations = "none" # This is only required when the User, Service Principal, or Identity running Terraform lacks the permissions to register Azure Resource Providers.
-  features {}
+  resource_provider_registrations = "all"
 }
 # This resource block defines an Azure Resource Group named "rg-AVD-int-dewc-1"
 resource "azurerm_resource_group" "rg-avd" {
