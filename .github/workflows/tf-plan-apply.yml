@@ -32,11 +32,11 @@ jobs:
     runs-on: ubuntu-latest
     env:
       #this is needed since we are running terraform with read-only permissions
-      ARM_SKIP_PROVIDER_REGISTRATION: true
+      ARM_SKIP_PROVIDER_REGISTRATION: false # Skip provider registration
     outputs:
       tfplanExitCode: ${{ steps.tf-plan.outputs.exitcode }}
       
-    steps:
+    steps: # The steps that are executed as part of this job
     # Checkout the repository to the GitHub Actions runner
     - name: Checkout
       uses: actions/checkout@v4
