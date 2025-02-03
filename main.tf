@@ -25,6 +25,9 @@ terraform {
 
 provider "azurerm" {
   resource_provider_registrations = "all"
+  features {
+    
+  }
 }
 # This resource block defines an Azure Resource Group named "rg-AVD-int-dewc-1"
 resource "azurerm_resource_group" "rg-avd" {
