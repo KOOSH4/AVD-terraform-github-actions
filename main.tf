@@ -4,6 +4,13 @@ terraform {
       source  = "hashicorp/azurerm"
       version = ">= 3.7.0"
     }
+    azuread = {
+      source  = "hashicorp/azuread"
+      version = "~>2.0" # Ensure compatibility with Azure AD features
+    }
+    random = {
+      source = "hashicorp/random"
+    }
   }
 
   # Update this block with the location of your terraform state file.
@@ -109,14 +116,14 @@ resource "azurerm_subnet" "avd_subnet" {
 # NICs are used to connect VMs to a virtual network, enabling communication with other resources.
 #
 # The block creates 2 NICs.
-resource "azurerm_network_interface" "avd_nic" {
-  for_each            = var.vm_names
-  name                = "nic-${each.value}"
-  location            = var.location2
+resource "azurerm_network_interface" "avd_vm_nic" {
+  count               = var.rdsh_count
+  name                = "${var.prefix}-${count.index + 1}-nic"
   resource_group_name = azurerm_resource_group.rg-avd.name
+  location            = var.location
 
   ip_configuration {
-    name                          = "internal"
+    name                          = "nic${count.index + 1}_config"
     subnet_id                     = azurerm_subnet.avd_subnet.id
     private_ip_address_allocation = "Dynamic"
   }
@@ -152,8 +159,8 @@ resource "azurerm_network_security_group" "avd_nsg" {
     access                     = "Allow"
     protocol                   = "Tcp"
     source_port_range          = "*"
-    destination_port_ranges    = ["443", "9350", "9354"]  # Required for AVD service
-    source_address_prefix      = "AzureFrontDoor.Backend" # Microsoft-recommended AVD service tag
+    destination_port_ranges    = ["443", "9350", "9354", "80"] # Required for AVD service
+    source_address_prefix      = "AzureFrontDoor.Backend"      # Microsoft-recommended AVD service tag
     destination_address_prefix = "*"
   }
 
@@ -270,21 +277,21 @@ data "azurerm_key_vault_secret" "admin_username" {
 }
 
 
-resource "azurerm_virtual_desktop_host_pool_registration_info" "avd_registration" {
+resource "azurerm_virtual_desktop_host_pool_registration_info" "registration" {
   hostpool_id     = azurerm_virtual_desktop_host_pool.avd_host_pool.id
-  expiration_date = formatdate("YYYY-MM-DD'T'HH:mm:ss'Z'", timeadd(timestamp(), "24h"))
+  expiration_date = timeadd(timestamp(), "48h") # Extended token validity
 }
 
 
 resource "azurerm_windows_virtual_machine" "avd_vm" {
-  for_each              = var.vm_names
-  name                  = each.value
+  count                 = var.rdsh_count
+  name                  = "${var.prefix}-${count.index + 1}"
   resource_group_name   = azurerm_resource_group.rg-avd.name
-  location              = var.location2
+  location              = var.location
   size                  = var.vm_size
+  network_interface_ids = [azurerm_network_interface.avd_vm_nic[count.index].id]
   admin_username        = data.azurerm_key_vault_secret.admin_username.value
   admin_password        = data.azurerm_key_vault_secret.admin_password.value
-  network_interface_ids = [azurerm_network_interface.avd_nic[each.key].id]
 
   encryption_at_host_enabled = true
 
@@ -303,29 +310,39 @@ resource "azurerm_windows_virtual_machine" "avd_vm" {
     sku       = "win11-23h2-avd"
     version   = "latest"
   }
-
-  depends_on = [azurerm_virtual_desktop_host_pool_registration_info.avd_registration]
-
-  custom_data = base64encode(<<EOF
-<powershell>
-# Install AVD Agent
-Invoke-WebRequest -Uri "https://query.prod.cms.rt.microsoft.com/cms/api/am/binary/RWrmXv" -OutFile "C:\avdagent.msi"
-Start-Process "msiexec.exe" -ArgumentList "/i C:\avdagent.msi /quiet /norestart" -Wait
-
-# Register VM with Host Pool
-$token = "${azurerm_virtual_desktop_host_pool_registration_info.avd_registration.token}"
-$cmd = "C:\Program Files\Microsoft RDInfra\Agent\RDAgentBootLoader.exe /token:$token"
-Start-Process -FilePath "powershell" -ArgumentList "-Command $cmd" -NoNewWindow -Wait
-
-# Configure FSLogix profile location
-New-Item -Path "HKLM:\SOFTWARE\FSLogix\Profiles" -Force
-New-ItemProperty -Path "HKLM:\SOFTWARE\FSLogix\Profiles" -Name "VHDLocations" -Value "\\${azurerm_storage_account.fslogix_sa.name}.file.core.windows.net\\${azurerm_storage_share.fslogix_share.name}" -PropertyType String -Force
-</powershell>
-EOF
-  )
 }
 
+resource "azurerm_virtual_machine_extension" "avd_dsc" {
+  count                      = var.rdsh_count
+  name                       = "${var.prefix}-dsc-${count.index + 1}"
+  virtual_machine_id         = azurerm_windows_virtual_machine.avd_vm[count.index].id
+  publisher                  = "Microsoft.Powershell"
+  type                       = "DSC"
+  type_handler_version       = "2.73"
+  auto_upgrade_minor_version = true
 
+  settings = <<SETTINGS
+  {
+    "modulesUrl": "https://wvdportalstorageblob.blob.core.windows.net/galleryartifacts/Configuration_09-08-2022.zip",
+    "configurationFunction": "Configuration.ps1\\AddSessionHost",
+    "properties": {
+      "HostPoolName": "${azurerm_virtual_desktop_host_pool.avd_host_pool.name}"
+    }
+  }
+SETTINGS
+
+  protected_settings = <<PROTECTED_SETTINGS
+  {
+    "properties": {
+      "registrationInfoToken": "${azurerm_virtual_desktop_host_pool_registration_info.registration.token}"
+    }
+  }
+PROTECTED_SETTINGS
+
+  depends_on = [
+    azurerm_virtual_desktop_host_pool.avd_host_pool
+  ]
+}
 
 # This resource block creates a private endpoint for an Azure Key Vault.
 # A private endpoint allows secure access to Azure services over a private link, avoiding exposure to the public internet.
@@ -370,20 +387,32 @@ resource "azurerm_storage_share" "fslogix_share" {
 }
 
 
+
+# FSLogix Configuration Extension
+resource "azurerm_virtual_machine_extension" "fslogix" {
+  count                      = var.rdsh_count
+  name                       = "${var.prefix}-fslogix-${count.index + 1}"
+  virtual_machine_id         = azurerm_windows_virtual_machine.avd_vm[count.index].id
+  publisher                  = "Microsoft.Compute"
+  type                       = "CustomScriptExtension"
+  type_handler_version       = "1.10"
+  auto_upgrade_minor_version = true
+
+  settings = <<SETTINGS
+  {
+    "commandToExecute": "powershell -Command \"New-Item -Path 'HKLM:\\SOFTWARE\\FSLogix\\Profiles' -Force; New-ItemProperty -Path 'HKLM:\\SOFTWARE\\FSLogix\\Profiles' -Name 'VHDLocations' -Value '\\\\${azurerm_storage_account.fslogix_sa.name}.file.core.windows.net\\${azurerm_storage_share.fslogix_share.name}' -PropertyType String -Force\""
+  }
+SETTINGS
+}
+
 # This resource block assigns a role to Azure Virtual Desktop (AVD) Virtual Machines (VMs) for accessing an FSLogix Storage Account.
 # Role assignments are used to grant access to Azure resources by assigning roles to users, groups, or applications.
 
-resource "azurerm_role_assignment" "fslogix_vm_role" {
-  for_each = azurerm_windows_virtual_machine.avd_vm # Iterate over each AVD VM
-
-  scope                = azurerm_storage_account.fslogix_sa.id     # Scope of the role assignment (ID of the FSLogix Storage Account)
-  role_definition_name = "Storage File Data SMB Share Contributor" # Role to be assigned, allowing access to file shares
-  principal_id         = each.value.identity[0].principal_id       # ID of the VM's managed identity
-
-  depends_on = [
-    azurerm_storage_account.fslogix_sa,    # Ensure the storage account is created first
-    azurerm_windows_virtual_machine.avd_vm # Ensure the VMs are created first
-  ]
+resource "azurerm_role_assignment" "fslogix" {
+  count                = var.rdsh_count
+  scope                = azurerm_storage_account.fslogix_sa.id
+  role_definition_name = "Storage File Data SMB Share Contributor"
+  principal_id         = azurerm_windows_virtual_machine.avd_vm[count.index].identity[0].principal_id
 }
 
 
