@@ -133,61 +133,6 @@ resource "azurerm_network_interface" "avd_vm_nic" {
 }
 
 
-# This resource block creates a Network Security Group (NSG) for Azure Virtual Desktop (AVD).
-# An NSG is used to control inbound and outbound traffic to network interfaces (NICs), VMs, and subnets.
-
-resource "azurerm_network_security_group" "avd_nsg" {
-  name                = "nsg-avd"
-  location            = var.location2
-  resource_group_name = azurerm_resource_group.rg-avd.name
-
-  # Allow RDP Access (Modify source_address_prefix for security)
-  security_rule {
-    name                       = "Allow-RDP"
-    priority                   = 100
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_range     = "3389"
-    source_address_prefixes    = var.allowed_rdp_ips # Using the variable here
-    destination_address_prefix = "*"
-  }
-
-  # Allow AVD Management Traffic (Required for AVD functionality)
-  security_rule {
-    name                       = "Allow-AVD-Management"
-    priority                   = 110
-    direction                  = "Inbound"
-    access                     = "Allow"
-    protocol                   = "Tcp"
-    source_port_range          = "*"
-    destination_port_ranges    = ["443", "9350", "9354", "80"] # Required for AVD service
-    source_address_prefix      = "AzureFrontDoor.Backend"      # Microsoft-recommended AVD service tag
-    destination_address_prefix = "*"
-  }
-
-  # Deny all other inbound traffic (Implicitly denied, but explicitly adding it for clarity)
-  security_rule {
-    name                       = "Deny-All-Inbound"
-    priority                   = 4000
-    direction                  = "Inbound"
-    access                     = "Deny"
-    protocol                   = "*"
-    source_port_range          = "*"
-    destination_port_range     = "*"
-    source_address_prefix      = "*"
-    destination_address_prefix = "*"
-  }
-}
-# This resource block associates a Network Security Group (NSG) with a Subnet.
-# Associating an NSG with a subnet applies the security rules to all resources within the subnet.
-
-resource "azurerm_subnet_network_security_group_association" "avd_subnet_nsg" {
-  subnet_id                 = azurerm_subnet.avd_subnet.id
-  network_security_group_id = azurerm_network_security_group.avd_nsg.id
-}
-
 
 
 # This resource block creates an Azure Key Vault.
