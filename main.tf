@@ -301,8 +301,8 @@ resource "azurerm_virtual_machine_extension" "domain_join" {
   type_handler_version = "1.3"
 
   settings = jsonencode({
-    Name    = var.AD_DOMAIN,
-    User    = var.admin_username,
+    Name    = var.AD_DOMAIN,      // e.g., "contoso.com"
+    User    = var.admin_username, // e.g., "contoso\\joinuser"
     Restart = "true",
     Options = "3"
   })
