@@ -300,25 +300,22 @@ resource "azurerm_virtual_machine_extension" "domain_join" {
   type                 = "JsonADDomainExtension"
   type_handler_version = "1.3"
 
-  settings = <<SETTINGS
-  {
-    "Name": "${var.AD_DOMAIN}",
-    "User": "${var.admin_username}",
-    "Restart": "true",
-    "Options": "3"
-  }
-SETTINGS
+  settings = jsonencode({
+    Name    = var.AD_DOMAIN,
+    User    = var.admin_username,
+    Restart = "true",
+    Options = "3"
+  })
 
-  protected_settings = <<PROTECTED_SETTINGS
-  {
-    "Password": "${var.admin_password}"
-  }
-PROTECTED_SETTINGS
+  protected_settings = jsonencode({
+    Password = var.admin_password
+  })
 
   depends_on = [
     azurerm_windows_virtual_machine.avd_vm
   ]
 }
+
 
 
 # This resource block creates a private endpoint for an Azure Key Vault.
