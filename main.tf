@@ -453,19 +453,18 @@ resource "azurerm_log_analytics_workspace" "avd_logs" {
 # Diagnostic settings are used to collect and send logs and metrics from Azure resources to different destinations, such as Log Analytics workspaces.
 
 resource "azurerm_monitor_diagnostic_setting" "avd_vm_diag" {
-  for_each = azurerm_windows_virtual_machine.avd_vm # Iterate over each AVD VM
+  for_each = { for idx, vm in azurerm_windows_virtual_machine.avd_vm : idx => vm }
 
-  name                       = "diag-${each.key}"                          # Name of the diagnostic setting
-  target_resource_id         = each.value.id                               # ID of the AVD VM
-  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id # ID of the Log Analytics workspace
+  name                       = "diag-${each.key}"
+  target_resource_id         = each.value.id
+  log_analytics_workspace_id = azurerm_log_analytics_workspace.avd_logs.id
 
-  # Enable Metrics
   metric {
-    category = "AllMetrics" # Category of metrics to collect
-    enabled  = true         # Enable collection of metrics
+    category = "AllMetrics"
+    enabled  = true
   }
 
-  depends_on = [azurerm_windows_virtual_machine.avd_vm] # Ensure VMs are created before applying diagnostic settings
+  depends_on = [azurerm_windows_virtual_machine.avd_vm]
 }
 
 # This resource block creates diagnostic settings for an FSLogix Storage Account.
