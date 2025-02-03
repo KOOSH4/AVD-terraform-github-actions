@@ -22,7 +22,8 @@ env:
   ARM_CLIENT_SECRET: "${{ secrets.AZURE_CLIENT_SECRET }}"
   TF_VAR_admin_username: ${{ secrets.AVD_ADMIN_USERNAME }}
   TF_VAR_admin_password: ${{ secrets.AVD_ADMIN_PASSWORD }}
- 
+  TF_VAR_AD_DOMAIN: ${{ secrets.AVD_AZURE_AD_DOMAIN }}
+
 
 
 jobs:

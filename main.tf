@@ -347,6 +347,35 @@ PROTECTED_SETTINGS
   ]
 }
 
+resource "azurerm_virtual_machine_extension" "domain_join" {
+  count                = var.rdsh_count
+  name                 = "${var.prefix}-domainjoin-${count.index + 1}"
+  virtual_machine_id   = azurerm_windows_virtual_machine.avd_vm[count.index].id
+  publisher            = "Microsoft.Compute"
+  type                 = "JsonADDomainExtension"
+  type_handler_version = "1.3"
+
+  settings = <<SETTINGS
+  {
+    "Name": "${var.AD_DOMAIN}",
+    "User": "${var.admin_username}",
+    "Restart": "true",
+    "Options": "3"
+  }
+SETTINGS
+
+  protected_settings = <<PROTECTED_SETTINGS
+  {
+    "Password": "${var.admin_password}"
+  }
+PROTECTED_SETTINGS
+
+  depends_on = [
+    azurerm_windows_virtual_machine.avd_vm
+  ]
+}
+
+
 # This resource block creates a private endpoint for an Azure Key Vault.
 # A private endpoint allows secure access to Azure services over a private link, avoiding exposure to the public internet.
 
