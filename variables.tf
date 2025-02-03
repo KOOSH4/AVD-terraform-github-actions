@@ -74,8 +74,3 @@ variable "AD_DOMAIN" {
   description = "The AAD DS domain name to join (e.g. contoso.com)"
   type        = string
 }
-
-variable "domain_ou" {
-  description = "The distinguished name for the OU where computer accounts should be created (e.g. OU=AADDC Computers,DC=contoso,DC=com)"
-  type        = string
-}
